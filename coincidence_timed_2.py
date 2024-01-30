@@ -12,7 +12,7 @@ Created on Mon Jan 18 16:38:35 2021
 # %% Imports
 
 
-#import TimeTagger
+import TimeTagger
 import time, sys
 import numpy as np
 from CTkMessagebox import CTkMessagebox
@@ -94,7 +94,6 @@ def get_counts(run_time, coincidence_window):
     finally:  # Do this even if we crash
         # Release the connection to the Time Tagger
         TimeTagger.freeTimeTagger(tagger)
-        print(counts, rates)
         return (counts[0], rates[0], counts[1], rates[1], counts[2], rates[2])
 
 

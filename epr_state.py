@@ -1,12 +1,11 @@
 # page to make epr state
-import sys, subprocess, re, os, threading
+import sys, os
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import customtkinter as ctk
-from tkinter import IntVar, StringVar, DoubleVar, font
+from tkinter import IntVar, StringVar, font, filedialog
 from CTkMessagebox import CTkMessagebox
 from coincidence_timed_2 import get_counts
 
@@ -18,16 +17,18 @@ py=3
 # get run time from bell_software.py
 run_time = sys.argv[1] # s
 coincidence_window = sys.argv[2] # ns
+alpha_offset = float(sys.argv[3])
+beta_offset = float(sys.argv[4])
 
 def main():
     # needed to sort listts after appending when taking a new measurement
-    global N00_list, N90_list, N45_list, N00_ab_list, N90_ab_list, progress_bar
+    global N00_list, N90_list, N45_list, N00_ab_list, N90_ab_list
     
     # page settings
     ctk.set_default_color_theme("dark-blue")
     root = ctk.CTk()
     ctk.set_appearance_mode("dark")
-    root.geometry("1300x900")
+    root.geometry("1200x900")
     root.title("Create the EPR State")
     root.resizable(False,False)
     
@@ -60,7 +61,7 @@ def main():
     angle_lab = ctk.CTkLabel(eql_frame, text="Arm Angle", font=(font.nametofont("TkDefaultFont"), 18))
     angle_lab.grid(row=2, column=0, padx=px, pady=py)
     angle_var = StringVar()
-    angle_var.set("7.0")
+    angle_var.set("7.3")
     angle_ent = ctk.CTkEntry(eql_frame, textvariable=angle_var,
                              placeholder_text=angle_var.get(),
                              width=75, height=65, font=(font.nametofont("TkDefaultFont"), 23),
@@ -127,50 +128,47 @@ def main():
     
     # save stuff frame
     save_frame = ctk.CTkFrame(eql_frame, corner_radius=cr)
-    save_frame.grid(row=3, column=0, columnspan=3)
-
-    # input file names
-    # N00
-    N00_file_var = StringVar()
-    N00_file_var.set(os.path.join(r"C:\Bell_Data", "N00_equalize_data.csv"))
-    N00_file_ent = ctk.CTkEntry(save_frame, textvariable=N00_file_var,
-                             placeholder_text=N00_file_var.get(), width=500)
-    N00_file_ent.grid(row=0, column=0, columnspan=2, padx=px, pady=py)
-    
-    # N9090
-    N90_file_var = StringVar()
-    N90_file_var.set(os.path.join(r"C:\Bell_Data", "N90_equalize_data.csv"))
-    N90_file_ent = ctk.CTkEntry(save_frame, textvariable=N90_file_var,
-                             placeholder_text=N00_file_var.get(), width=500)
-    N90_file_ent.grid(row=1, column=0, columnspan=2, padx=px, pady=py)
-    
+    save_frame.grid(row=3, column=0, columnspan=3)    
 
     # fxn to save equalize data
     def N00_to_csv():
-        column_names = ["angles", "a counts", "a rates", "b counts", "b rates", "coins", "coin rates"]
-        save_df = pd.DataFrame(np.array(N00_list), columns=column_names)
-        save_df.to_csv(N00_file_var.get())
-        
+        try:
+            column_names = ["angles", "a counts", "a rates", "b counts", "b rates", "coins", "coin rates"]
+            save_df = pd.DataFrame(np.array(N00_list), columns=column_names)
+            file_path = filedialog.asksaveasfilename(initialdir="C:\Bell_Data", filetypes=[("csv file", ".csv")], defaultextension=".csv")
+            if file_path:
+                save_df.to_csv(file_path)
+        except Exception as e:
+            CTkMessagebox(title=f"Error", message=e)
+            
     def N90_to_csv():
-        column_names = ["angles", "a counts", "a rates", "b counts", "b rates", "coins", "coin rates"]
-        save_df = pd.DataFrame(np.array(N90_list), columns=column_names)
-        save_df.to_csv(N90_file_var.get())
+        try:
+            column_names = ["angles", "a counts", "a rates", "b counts", "b rates", "coins", "coin rates"]
+            save_df = pd.DataFrame(np.array(N90_list), columns=column_names)
+            file_path = filedialog.asksaveasfilename(initialdir="C:\Bell_Data", filetypes=[("csv file", ".csv")], defaultextension=".csv")
+            if file_path:
+                save_df.to_csv(file_path)
+        except Exception as e:
+            CTkMessagebox(title=f"Error", message=e)
 
     # buttons to save equalize data
     # N00
-    N00_save_button = ctk.CTkButton(save_frame, text="Save N(0,0) Data", command=N00_to_csv, width=100)
+    N00_save_button = ctk.CTkButton(save_frame, text="Save N(0,0) Data", command=N00_to_csv, width=300)
     N00_save_button.grid(row=0, column=2, padx=px, pady=py)
     
     #N9090
-    N90_save_button = ctk.CTkButton(save_frame, text="Save N(90, 90) Data", command=N90_to_csv, width=100)
+    N90_save_button = ctk.CTkButton(save_frame, text="Save N(90, 90) Data", command=N90_to_csv, width=300)
     N90_save_button.grid(row=1, column=2, padx=px, pady=py)
 
     # end of equalizing sweep stuff
     # start of maximizing N4545 stuff
 
     # frame for maximizing N4545
-    max_frame = ctk.CTkFrame(root, corner_radius=cr)
-    max_frame.grid(row=1, column=0, padx=px, pady=py)
+    buffer_frame = ctk.CTkFrame(root, corner_radius=cr)
+    buffer_frame.grid(row=1, column=0, padx=px, pady=py)
+    
+    max_frame = ctk.CTkFrame(buffer_frame, corner_radius=cr)
+    max_frame.grid(row=0, column=0, padx=px, pady=py)
 
     # label for the maximization
     max_lab = ctk.CTkLabel(max_frame, text="Maximize N(45,45)")
@@ -181,7 +179,7 @@ def main():
     qp_angle_lab = ctk.CTkLabel(max_frame, text="Quartz Plate Angle\n(about vertical)", font=(font.nametofont("TkDefaultFont"), 18))    
     qp_angle_lab.grid(row=1, column=0, padx=px, pady=py)
     qp_angle_var = StringVar()
-    qp_angle_var.set("35")
+    qp_angle_var.set("265")
     qp_angle_ent = ctk.CTkEntry(max_frame, textvariable=qp_angle_var,
                              placeholder_text=qp_angle_var.get(), width=75,
                              height=65, font=(font.nametofont("TkDefaultFont"), 23),
@@ -234,23 +232,31 @@ def main():
     # button to measure N4545
     N45_measure_button = ctk.CTkButton(max_frame, text="Measure", command=N45_measure, width=100)
     N45_measure_button.grid(row=1, column=2, padx=px, pady=py)
-
-    # input file name
-    N45_file_var = StringVar()
-    N45_file_var.set(os.path.join(r"C:\Bell_Data", "maximize.csv"))
-    N45_file_ent = ctk.CTkEntry(max_frame, textvariable=N45_file_var,
-                             placeholder_text=N45_file_var.get(), width=500)
-    N45_file_ent.grid(row=2, column=0, columnspan=2, padx=px, pady=py)
+    
+    # save frame
+    save_45_frame = ctk.CTkFrame(max_frame, corner_radius=cr)
+    save_45_frame.grid(row=2, column=0, padx=px, pady=py, columnspan=3)
 
     # fxn & button to save data
     def N45_to_csv():
-        column_names = ["angles", "a counts", "a rates", "b counts", "b rates", "coins", "coin rates"]
-        # the np.array().T is to get the shape right
-        save_df = pd.DataFrame(np.array(N45_list), columns=column_names)
-        save_df.to_csv(N45_file_var.get())
+        try:
+            column_names = ["angles", "a counts", "a rates", "b counts", "b rates", "coins", "coin rates"]
+            save_df = pd.DataFrame(np.array(N45_list), columns=column_names)
+            file_path = filedialog.asksaveasfilename(initialdir="C:\Bell_Data", defaultextension=".csv")
+            if file_path:
+                save_df.to_csv(file_path)
+        except Exception as e:
+            CTkMessagebox(title=f"Error", message=e)
+        
     
-    N45_save_button = ctk.CTkButton(max_frame, text="Save Data", command=N45_to_csv, width=100)
-    N45_save_button.grid(row=2, column=2, padx=px, pady=py)
+    N45_save_button = ctk.CTkButton(save_45_frame, text="Save Data", command=N45_to_csv, width=300)
+    N45_save_button.grid(row=0, column=0, padx=px, pady=py)
+    
+    def help():
+        CTkMessagebox(title="Dial to Polarizer Angle Guide", message="The polarizer angle 'p' is related to the dial angle 'd' and offset 'x' by the formula\nd = (x - p) % 360")
+    
+    help_button = ctk.CTkButton(root, text="Help", command=help, height=150, width=150)
+    help_button.grid(row=0, column=1, padx=px, pady=py)
     
     
     # create the page

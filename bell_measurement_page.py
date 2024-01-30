@@ -1,13 +1,10 @@
-from re import S
 import sys, os
 import numpy as np
 import pandas as pd
 import customtkinter as ctk
 from CTkMessagebox import CTkMessagebox
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-from tkinter import IntVar, StringVar, font
-from tkinter import messagebox
+from tkinter import StringVar
+from tkinter import filedialog
 from coincidence_timed_2 import get_counts
 
 
@@ -117,12 +114,12 @@ def main():
                 b_lab.grid(row=row_idx, column=1, padx=px, pady=0)
                 
                 # get and show alpha with offset angle
-                ao_val = (a_val - a_offset) % 360
+                ao_val = (a_offset - a_val) % 360
                 ao_lab = ctk.CTkLabel(table_frame, text=str(ao_val), width=w)
                 ao_lab.grid(row=row_idx, column=2, padx=px, pady=0)
                 
                 # get and show beta with offset angle
-                bo_val = (b_val - b_offset) % 360
+                bo_val = (b_offset - b_val) % 360
                 bo_lab = ctk.CTkLabel(table_frame, text=str(bo_val), width=w)
                 bo_lab.grid(row=row_idx, column=3, padx=px, pady=0)
                 
@@ -205,14 +202,7 @@ def main():
 
     # saving stuff frame
     save_frame = ctk.CTkFrame(bell_frame, corner_radius=cr)
-    save_frame.grid(row=1, column=0, padx=px, pady=py, sticky="w")
-        
-    # input file name
-    file_var = StringVar()
-    file_var.set(os.path.join("C:\Bell_Data", "Bell_measurement_data.csv"))
-    file_ent = ctk.CTkEntry(save_frame, textvariable=file_var,
-                             placeholder_text=file_var.get(), width=500)
-    file_ent.grid(row=0, column=0, padx=px, pady=py, sticky="e")
+    save_frame.grid(row=1, column=0, padx=px, pady=py)
 
     # save data fxn and button
     def save_data():
@@ -220,13 +210,15 @@ def main():
         column_names = ["alpha", "beta", "N_A", "N_A/s", "N_B", "N_B/s", "coins", "coins/s", "N_AC", "N_AC/s"]
         try:
             save_df = pd.DataFrame(np.array(measurement_list), columns=column_names)
-            save_df.to_csv(file_var.get())
-            messagebox.showinfo("Save Success", f"Successfully saved data at\n{file_var.get()}")
+            file_path = filedialog.asksaveasfilename(initialdir="C:\Bell_Data", defaultextension=".csv")
+            if file_path:
+                save_df.to_csv(file_path)
         except Exception as e:
-            CTkMessagebox(title=f"Error:\t{e}", message=f"Could not save data at\n{file_var.get()}")
+            CTkMessagebox(title=f"Error", message=e)
+
             
-    save_button = ctk.CTkButton(save_frame, text="Save Data", command=save_data, width=100)
-    save_button.grid(row=0, column=1, padx=px, pady=py, sticky="w")
+    save_button = ctk.CTkButton(save_frame, text="Save Data", command=save_data, width=300)
+    save_button.grid(row=0, column=0, padx=px, pady=py, sticky="w")
 
 
     # create the page
