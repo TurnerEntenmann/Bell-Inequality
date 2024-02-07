@@ -52,7 +52,8 @@ def main():
     m_frame.grid(row=1, column=0, padx=px, pady=py)
 
     # tell the user where to put alpha
-    alpha_lab = ctk.CTkLabel(beta_frame, text=f"Set alpha to\n{np.round(alpha_offset,2)}\non the dial", font=(font.nametofont("TkDefaultFont"), 18))
+    alpha_dial = np.round((45 - alpha_offset) % 360, 2)
+    alpha_lab = ctk.CTkLabel(beta_frame, text=f"Set alpha to\n{alpha_dial}\non the dial", font=(font.nametofont("TkDefaultFont"), 18))
     alpha_lab.grid(row=0, column=0, padx=px, pady=py)
     
     # tell the computer at what angle the user wants to measure
@@ -89,7 +90,7 @@ def main():
         sub.spines[["right", "top"]].set_visible(False)
         
         # plot angles as x, coins/s as y
-        sub.plot([t[0] for t in data_list], [t[-1] for t in data_list], c="0", marker=".", markersize=15, linestyle=":", label=r"N(0,$\beta$)")
+        sub.plot([t[0] for t in data_list], [t[-1] for t in data_list], c="0", marker=".", markersize=15, linestyle=":", label=r"N(45,$\beta$)")
         
         # draw and place the graph and legend
         sub.legend(frameon=False) 
